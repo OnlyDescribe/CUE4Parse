@@ -148,7 +148,13 @@ namespace CUE4Parse.UE4.Assets.Exports.Animation
                 //    CurveCompressionSettings = new ResolvedLoadedObject(Owner!.Provider!.LoadPackageObject("/Game/DSCore/Animation/DA_AnimCurveCompressionSettings.DA_AnimCurveCompressionSettings"));
                 //}
 
-                if (!string.IsNullOrEmpty(CurveCodecPath) && CurveCompressionSettings?.Load<UAnimCurveCompressionSettings>()?.GetCodec(CurveCodecPath) is { } codec)
+                var codec = !string.IsNullOrEmpty(CurveCodecPath)
+                    ? CurveCompressionSettings?.Load<UAnimCurveCompressionSettings>()?.GetCodec(CurveCodecPath)
+                    : null;
+                if (codec == null && Ar.Game == GAME_WutheringWaves &&
+                    CurveCodecPath?.Contains("AnimCurveCompressionCodec_ACL", StringComparison.Ordinal) == true)
+                    codec = new AnimCurveCompressionCodec_ACL();
+                if (codec != null)
                 {
                     CompressedCurveData = new FRawCurveTracks(codec.ConvertCurves(CompressedCurveNames, CompressedCurveByteStream));
                 }
@@ -328,6 +334,9 @@ namespace CUE4Parse.UE4.Assets.Exports.Animation
             CompressedCurveByteStream = Ar.ReadBytes(numCurveBytes);
 
             var boneCompressionCodec = BoneCompressionSettings?.Load<UAnimBoneCompressionSettings>()?.GetCodec(BoneCodecDDCHandle);
+            if (boneCompressionCodec == null && Ar.Game == GAME_WutheringWaves &&
+                BoneCodecDDCHandle?.StartsWith("AnimBoneCompressionCodec_ACL", StringComparison.Ordinal) == true)
+                boneCompressionCodec = new UAnimBoneCompressionCodec_ACLSafe();
             if (boneCompressionCodec != null)
             {
                 CompressedDataStructure = boneCompressionCodec.AllocateAnimData();
