@@ -36,15 +36,15 @@ namespace CUE4Parse_Conversion.Writers.ActorX.Structs.Animations
                 {
                     var boneInfo = skeleton.ReferenceSkeleton.FinalRefBoneInfo[boneIndex];
                     var originalTransform = skeleton.ReferenceSkeleton.FinalRefBonePose[boneIndex];
-                    var track = sequence.Tracks[boneIndex];
-
                     var boneOrientation = originalTransform.Rotation;
                     var bonePosition = originalTransform.Translation;
                     var boneScale = originalTransform.Scale3D;
-
-                    if (track.HasKeys())
+                    // Curve-only reference animations retain the skeleton pose for absent tracks.
+                    if (boneIndex < sequence.Tracks.Count && sequence.Tracks[boneIndex].HasKeys())
                     {
-                        track.GetBoneTransform(refFrame, sequence.NumFrames, ref boneOrientation, ref bonePosition, ref boneScale);
+                        var track = sequence.Tracks[boneIndex];
+                        track.GetBoneTransform(Math.Clamp(refFrame, 0, Math.Max(0, sequence.NumFrames - 1)),
+                            sequence.NumFrames, ref boneOrientation, ref bonePosition, ref boneScale);
                         sequence.RetargetBoneTransform(boneIndex, originalTransform, ref boneOrientation, ref bonePosition, ref boneScale);
                     }
 
